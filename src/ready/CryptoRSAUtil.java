@@ -1,3 +1,5 @@
+package ready;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -6,11 +8,14 @@ import java.security.*;
 
 public final class CryptoRSAUtil {
 
+    private static final String ALGORITHM = "RSA";
+    private static final String MODE = "ECB";
+    private static final String PADDING = "OAEPWithSHA-256AndMGF1Padding";
     private static final Cipher cipher;
 
     static {
         try {
-            cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            cipher = Cipher.getInstance(ALGORITHM + "/" + MODE + "/" + PADDING);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             throw new RuntimeException(e);
         }
@@ -25,5 +30,4 @@ public final class CryptoRSAUtil {
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
         return cipher.doFinal(data);
     }
-
 }
