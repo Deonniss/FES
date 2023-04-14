@@ -18,66 +18,85 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static String path;
 
-    public static void main(String[] args) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, ClassNotFoundException {
+    public static void main(String[] args) {
 
-        if (args.length != 1) return;
-        path = args[0];
+        if (args.length != 1) {
+            System.out.println("Р’РІРµРґРёС‚Рµ РґРёСЂРµРєС‚РѕСЂРёСЋ РґР»СЏ СЂР°Р±РѕС‚С‹");
+            path = scanner.nextLine();
+        } else {
+            path = args[0];
+        }
+
         String command = "";
         while (!command.equals("exit")) {
-            System.out.println("Введите команду");
-            command = scanner.nextLine();
-            switch (command) {
-                case "help" -> help();
-                case "gen keys" -> genKeys();
-                case "encrypt" -> encryptFile();
-                case "decrypt" -> decryptFile();
+            try {
+                System.out.println("Р’РІРµРґРёС‚Рµ РєРѕРјР°РЅРґСѓ");
+                command = scanner.nextLine();
+                switch (command) {
+                    case "help" -> help();
+                    case "gen keys" -> genKeys();
+                    case "encrypt" -> encryptFile();
+                    case "decrypt" -> decryptFile();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }
 
     private static void help() {
         System.out.println("""
-                gen keys - Генерация основного, приватного и публичного ключа\s
-                decrypt [path to file] [path to public key] [key]- Шифрование данных\s
-                encrypt [path to file] [path to private key] [secret key]- Дешифрование данных
+                gen keys - Р“РµРЅРµСЂР°С†РёСЏ РѕСЃРЅРѕРІРЅРѕРіРѕ, РїСЂРёРІР°С‚РЅРѕРіРѕ Рё РїСѓР±Р»РёС‡РЅРѕРіРѕ РєР»СЋС‡Р°\s
+                decrypt [path to file] [path to public key] [key]- РЁРёС„СЂРѕРІР°РЅРёРµ РґР°РЅРЅС‹С…\s
+                encrypt [path to file] [path to private key] [secret key]- Р”РµС€РёС„СЂРѕРІР°РЅРёРµ РґР°РЅРЅС‹С…
                 """);
     }
 
     private static void genKeys() throws IOException {
         KeyPair keyPair = KeyGenerator.generateRsaKeyPair();
-        FileUtil.saveKeyToFile(keyPair.getPublic(), path.concat("/public.rsa"));
-        FileUtil.saveKeyToFile(keyPair.getPrivate(), path.concat("/private.rsa"));
+        String pathPublic = path.concat("/public.rsa");
+        String pathPrivate =  path.concat("/private.rsa");
+        FileUtil.saveKeyToFile(keyPair.getPublic(), pathPublic);
+        FileUtil.saveKeyToFile(keyPair.getPrivate(),pathPrivate);
+        System.out.println("РџСѓР±Р»РёС‡РЅС‹Р№ РєР»СЋС‡ СЃРѕС…СЂР°РЅРµРЅ - ".concat(pathPublic));
+        System.out.println("РџСЂРёРІР°С‚РЅС‹Р№ РєР»СЋС‡ СЃРѕС…СЂР°РЅРµРЅ - ".concat(pathPrivate));
     }
 
     private static void encryptFile() throws IOException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         String pathToFile, key, pathToPublicKey;
-        System.out.println("Введите путь к файлу");
+        System.out.println("Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ");
         pathToFile = scanner.nextLine();
-        System.out.println("Введите путь к публичному ключу");
+        System.out.println("Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє РїСѓР±Р»РёС‡РЅРѕРјСѓ РєР»СЋС‡Сѓ");
         pathToPublicKey = scanner.nextLine();
-        System.out.println("Введите ключ");
+        System.out.println("Р’РІРµРґРёС‚Рµ РєР»СЋС‡");
         key = scanner.nextLine();
         PublicKey publicKey = (PublicKey) FileUtil.loadKeyFromFile(path.concat("/".concat(pathToPublicKey)));
         byte[] data = FileUtil.loadDataFromFile(path.concat("/".concat(pathToFile)));
         byte[] encryptData = CryptoGOST28147.encrypt(key.getBytes(), data);
-        FileUtil.saveDataToFile(encryptData, path.concat("/".concat(Sha256Util.hash(encryptData))).concat(".edata"));
+        String pathData = path.concat("/".concat(Sha256Util.hash(encryptData))).concat(".edata");
+        FileUtil.saveDataToFile(encryptData, pathData);
         byte[] encryptKey = CryptoRSAUtil.encryptRSA(key.getBytes(), publicKey);
-        FileUtil.saveDataToFile(encryptKey, path.concat("/".concat(Sha256Util.hash(encryptKey)).concat(".ekey")));
+        String pathKey = path.concat("/".concat(Sha256Util.hash(encryptKey)).concat(".ekey"));
+        FileUtil.saveDataToFile(encryptKey, pathKey);
+        System.out.println("Р—Р°С€РёС„СЂРѕРІР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ СЃРѕС…СЂР°РЅРµРЅС‹ - ".concat(pathData));
+        System.out.println("Р—Р°С€РёС„СЂРѕРІР°РЅРЅС‹Р№ РїР°СЂРѕР»СЊ СЃРѕС…СЂР°РЅРµРЅ - ".concat(pathKey));
     }
 
     private static void decryptFile() throws IOException, ClassNotFoundException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         String pathToEncryptFile, secretKey, pathToPrivateKey;
-        System.out.println("Введите путь к зашифрованному файлу");
+        System.out.println("Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє Р·Р°С€РёС„СЂРѕРІР°РЅРЅРѕРјСѓ С„Р°Р№Р»Сѓ");
         pathToEncryptFile = scanner.nextLine();
-        System.out.println("Введите путь к приватному ключу");
+        System.out.println("Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє РїСЂРёРІР°С‚РЅРѕРјСѓ РєР»СЋС‡Сѓ");
         pathToPrivateKey = scanner.nextLine();
-        System.out.println("Введите путь к зашифрованному ключу");
+        System.out.println("Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє Р·Р°С€РёС„СЂРѕРІР°РЅРЅРѕРјСѓ РєР»СЋС‡Сѓ");
         secretKey = scanner.nextLine();
         byte[] keyData = FileUtil.loadDataFromFile(path.concat("/".concat(secretKey)));
         PrivateKey privateKey = (PrivateKey) FileUtil.loadKeyFromFile(path.concat("/".concat(pathToPrivateKey)));
         byte[] decryptKey = CryptoRSAUtil.decryptRSA(keyData, privateKey);
         byte[] data = FileUtil.loadDataFromFile(path.concat("/".concat(pathToEncryptFile)));
         byte[] encryptData = CryptoGOST28147.decrypt(decryptKey, data);
-        FileUtil.saveDataToFile(encryptData, path.concat("/".concat(Sha256Util.hash(encryptData)).concat(".ddata")));
+        String pathData = path.concat("/".concat(Sha256Util.hash(encryptData)).concat(".ddata"));
+        FileUtil.saveDataToFile(encryptData, pathData);
+        System.out.println("Р Р°СЃС€РёС„СЂРѕРІР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ СЃРѕС…СЂР°РЅРµРЅС‹ - ".concat(pathData));
     }
 }
